@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visualização de Tarefas</title>
+    <style>
+        body {
+            font-family: cursive;
+            background-color: rgb(121, 216, 216);
+            margin: 0;
+            padding: 20px;
+        }
+        #formTarefa {
+            margin-bottom: 20px;
+        }
+        #containerTarefas {
+            background: #fff;
+            border: 1px solid #ddd;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .tarefa {
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+        }
+        .tarefa:last-child {
+            border-bottom: none;
+        }
+        .acoes-tarefa {
+            margin-top: 10px;
+        }
+        .botao-editar, .botao-excluir {
+            background-color: #007bff;
+            color: #4b032d;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor:grab;
+            margin-right: 5px;
+        }
+        .botao-editar:hover, .botao-excluir:hover {
+            background-color: #0056b3;
+        }
+      
+    #modal-edicao {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgb(212, 166, 206);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+    #modal-conteudo {
+        background: #eee3eb;
+        padding: 20px;
+        border-radius: 5px;
+        text-align: center;
+    }
+    #modal-conteudo input {
+        width: 100%;
+        padding: 8px;
+        margin-bottom: 10px;
+    }
+    #modal-conteudo button {
+        margin: 5px;
+        padding: 10px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+      
+    }
+</style>
+     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.0.0/dist/fullcalendar.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.0.0/dist/fullcalendar.min.js"></script>
+
+</head>
+<body>
+
+    
+    <div id="visualizacao">
+        <button id="mostrar-lista">Visualizar Lista</button>
+       
+    </div>
+
+    <div id="lista-tarefas" style="display: none;"></div>
+
+    <div id="calendario-tarefas" style="display: none;"></div>
+
+    
+<div id="modal-edicao" style="display: none;">
+    <div id="modal-conteudo">
+        <h2>Editar Tarefa</h2>
+        <label for="descricao-tarefa">Descrição:</label>
+        <input type="text" id="descricao-tarefa">
+        <button id="salvar-edicao">Salvar</button>
+        <button id="fechar-modal">Fechar</button>
+    </div>
+</div>
+
+
+    <script>
+      document.addEventListener('DOMContentLoaded', () => {
+    const tarefas = [
+        { id: 1, descricao: 'Comprar leite', data: '2024-08-30' },
+        { id: 2, descricao: 'Reunião com cliente', data: '2024-08-31' },
+        { id: 3, descricao: 'Reunião com cliente', data: '2024-08-31' }
+    ];
+
+    let tarefaAtual = null;
+
+    const containerTarefas = document.getElementById('lista-tarefas');
+    const calendarioTarefas = document.getElementById('calendario-tarefas');
+    const modalEdicao = document.getElementById('modal-edicao');
+    const descricaoTarefaInput = document.getElementById('descricao-tarefa');
+    const salvarEdicaoButton = document.getElementById('salvar-edicao');
+    const fecharModalButton = document.getElementById('fechar-modal');
+
+    function criarHTMLTarefa(tarefa) {
+        return `
+            <div class="tarefa">
+                <div class="conteudo-tarefa">
+                    <strong>Tarefa:</strong> ${tarefa.descricao}
+                </div>
+                <div class="acoes-tarefa">
+                    <button class="botao-editar" data-id="${tarefa.id}">Editar</button>
+                    <button class="botao-excluir" data-id="${tarefa.id}">Excluir</button>
+                </div>
+            </div>
+        `;
+    }
+
+    function atualizarListaTarefas() {
+        containerTarefas.innerHTML = '';
+        tarefas.forEach(tarefa => {
+            containerTarefas.innerHTML += criarHTMLTarefa(tarefa);
+        });
+        adicionarEventos();
+    }
+
+    function adicionarEventos() {
+        document.querySelectorAll('.botao-excluir').forEach(botao => {
+            botao.addEventListener('click', function() {
+                const id = parseInt(this.getAttribute('data-id'));
+                console.log('Excluir tarefa com ID:', id);
+                const index = tarefas.findIndex(t => t.id === id);
+                if (index > -1) {
+                    tarefas.splice(index, 1); 
+                    console.log('Tarefa excluída:', id);
+                    atualizarListaTarefas(); 
+                }
+            });
+        });
+
+        document.querySelectorAll('.botao-editar').forEach(botao => {
+            botao.addEventListener('click', function() {
+                const id = parseInt(this.getAttribute('data-id'));
+                tarefaAtual = tarefas.find(t => t.id === id);
+                descricaoTarefaInput.value = tarefaAtual.descricao;
+                modalEdicao.style.display = 'flex'; 
+            });
+        });
+    }
+
+    salvarEdicaoButton.addEventListener('click', () => {
+        if (tarefaAtual) {
+            tarefaAtual.descricao = descricaoTarefaInput.value;
+            atualizarListaTarefas();
+            modalEdicao.style.display = 'none';
+            tarefaAtual = null;
+        }
+    });
+
+    fecharModalButton.addEventListener('click', () => {
+        modalEdicao.style.display = 'none';
+        tarefaAtual = null;
+    });
+
+    function mostrarListaTarefas() {
+        containerTarefas.style.display = 'block';
+        calendarioTarefas.style.display = 'none';
+        atualizarListaTarefas();
+    }
+
+    function mostrarCalendarioTarefas() {
+        containerTarefas.style.display = 'none';
+        calendarioTarefas.style.display = 'block';
+
+        const calendarEl = document.createElement('div');
+        calendarioTarefas.innerHTML = ''; 
+        calendarioTarefas.appendChild(calendarEl);
+
+        const calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'dayGridMonth',
+            events: tarefas.map(tarefa => ({
+                title: tarefa.descricao,
+                start: tarefa.data,
+                id: tarefa.id
+            }))
+        });
+
+        calendar.render();
+    }
+
+    document.getElementById('mostrar-lista').addEventListener('click', mostrarListaTarefas);
+    
+});
+
+    </script>
+
+    
+</body>
+</html>
